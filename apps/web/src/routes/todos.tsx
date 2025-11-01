@@ -9,7 +9,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Trash2 } from "lucide-react";
+import {  Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { useSuspenseQuery } from "@tanstack/react-query";

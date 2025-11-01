@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import { Toaster } from "@/components/ui/sonner";
 
 import {
@@ -16,26 +18,23 @@ import type { ConvexQueryClient } from "@convex-dev/react-query";
 import type { ConvexReactClient } from "convex/react";
 import Loader from "@/components/loader";
 
-import { createServerFn } from "@tanstack/react-start";
-import { getRequest, getCookie } from "@tanstack/react-start/server";
-import { ConvexBetterAuthProvider } from "@convex-dev/better-auth/react";
-import {
-	fetchSession,
-	getCookieName,
-} from "@convex-dev/better-auth/react-start";
+import { createServerFn } from '@tanstack/react-start'
+import { getCookie, getRequest } from '@tanstack/react-start/server'
+import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
+import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start'
 import { authClient } from "@/lib/auth-client";
 import { createAuth } from "@hack-test/backend/convex/auth";
 
-const fetchAuth = createServerFn({ method: "GET" }).handler(async () => {
-	const { session } = await fetchSession(getRequest());
-	const sessionCookieName = getCookieName(createAuth);
-	const token = getCookie(sessionCookieName);
-	return {
-		userId: session?.user.id,
-		token,
-	};
-});
 
+const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
+  const { session } = await fetchSession(getRequest())
+  const sessionCookieName = getCookieName(createAuth)
+  const token = getCookie(sessionCookieName)
+  return {
+    userId: session?.user.id,
+    token,
+  }
+})
 export interface RouterAppContext {
 	queryClient: QueryClient;
 	convexClient: ConvexReactClient;
@@ -64,38 +63,48 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 		],
 	}),
 
-	component: RootDocument,
-	beforeLoad: async (ctx) => {
-		const { userId, token } = await fetchAuth();
-		if (token) {
-			ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
-		}
-		return { userId, token };
-	},
+	component: RootComponent,
+	// beforeLoad: async (ctx) => {
+	// 	const { userId, token } = await fetchAuth();
+	// 	if (token) {
+	// 		ctx.context.convexQueryClient.serverHttpClient?.setAuth(token);
+	// 	}
+	// 	return { userId, token };
+	// },
 });
 
-function RootDocument() {
-	const isFetching = useRouterState({ select: (s) => s.isLoading });
-	const context = useRouteContext({ from: Route.id });
+function RootComponent() {
+  const context = useRouteContext({ from: Route.id })
+  	const isFetching = useRouterState({ select: (s) => s.isLoading });
+
+  return (
+    <ConvexBetterAuthProvider
+      client={context.convexClient}
+      authClient={authClient}
+    >
+      <RootDocument>
+						{isFetching ? <Loader /> : <Outlet />}
+      </RootDocument>
+    </ConvexBetterAuthProvider>
+  )
+}
+function RootDocument({ children }: Readonly<{ children: React.ReactNode }>) {
 	return (
-		<ConvexBetterAuthProvider
-			client={context.convexClient}
-			authClient={authClient}
-		>
-			<html lang="en" className="dark">
+		<html lang="en" className="dark">
 				<head>
 					<HeadContent />
 				</head>
 				<body>
 					<div className="grid h-svh grid-rows-[auto_1fr]">
 						<Header />
-						{isFetching ? <Loader /> : <Outlet />}
+						{children}
 					</div>
 					<Toaster richColors />
 					<TanStackRouterDevtools position="bottom-left" />
 					<Scripts />
 				</body>
 			</html>
-		</ConvexBetterAuthProvider>
 	);
 }
+
+
